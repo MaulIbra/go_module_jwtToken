@@ -5,23 +5,23 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 )
 
-func GenerateToken(duration int64,signKey string) string {
+func GenerateToken(duration int64,signKey string, token chan string,wg *sync.WaitGroup) {
 	mySigningKey := []byte(signKey)
-
+	defer wg.Done()
 	claims := &jwt.StandardClaims{
 		ExpiresAt: time.Now().Unix() + duration,
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenKey, err := token.SignedString(mySigningKey)
+	tokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenKey, err := tokenClaims.SignedString(mySigningKey)
 	if err != nil {
 		log.Println(err)
 	}
-
-	return tokenKey
+	 token <- tokenKey
 }
 
 func VerifyToken(tokenString string,signKey string) (bool, error) {
