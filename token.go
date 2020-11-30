@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-func GenerateToken(duration int64,signKey string, token chan string,wg *sync.WaitGroup) {
-	mySigningKey := []byte(signKey)
+func GenerateToken(duration int64, token chan string,wg *sync.WaitGroup) {
+	mySigningKey := []byte("SignKey")
 	defer wg.Done()
 	claims := &jwt.StandardClaims{
 		ExpiresAt: time.Now().Unix() + duration,
@@ -24,8 +24,8 @@ func GenerateToken(duration int64,signKey string, token chan string,wg *sync.Wai
 	 token <- tokenKey
 }
 
-func VerifyToken(tokenString string,signKey string) (bool, error) {
-	mySigningKey := []byte(signKey)
+func VerifyToken(tokenString string) (bool, error) {
+	mySigningKey := []byte("SignKey")
 
 	token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return mySigningKey, nil
@@ -47,8 +47,7 @@ func VerifyToken(tokenString string,signKey string) (bool, error) {
 func TokenValidation(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := r.Header.Get("Authorization")
-		signKey  := r.Header.Get("Signkey")
-		validity, _ := VerifyToken(token,signKey)
+		validity, _ := VerifyToken(token)
 		if validity {
 			next.ServeHTTP(w, r)
 		} else {
