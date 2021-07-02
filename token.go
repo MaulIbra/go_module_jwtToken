@@ -48,6 +48,7 @@ func TokenValidation() gin.HandlerFunc {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "you are not unauthorized",
 			})
+			c.Abort()
 			return
 		} else {
 			token := c.Request.Header["Authorization"][0]
@@ -58,6 +59,7 @@ func TokenValidation() gin.HandlerFunc {
 				c.JSON(http.StatusUnauthorized, gin.H{
 					"error": "you are not unauthorized",
 				})
+				c.Abort()
 				return
 			}
 		}
