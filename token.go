@@ -1,17 +1,16 @@
 package jwtToken
 
 import (
-	"encoding/json"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
-	"sync"
 	"time"
 )
 
-func GenerateToken(duration int64, token chan string,wg *sync.WaitGroup) {
+func GenerateToken(duration int64) string {
 	mySigningKey := []byte("SignKey")
-	defer wg.Done()
+
 	claims := &jwt.StandardClaims{
 		ExpiresAt: time.Now().Unix() + duration,
 	}
@@ -21,7 +20,7 @@ func GenerateToken(duration int64, token chan string,wg *sync.WaitGroup) {
 	if err != nil {
 		log.Println(err)
 	}
-	 token <- tokenKey
+	return tokenKey
 }
 
 func VerifyToken(tokenString string) (bool, error) {
@@ -43,17 +42,16 @@ func VerifyToken(tokenString string) (bool, error) {
 	return token.Valid, err
 }
 
-
-func TokenValidation(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get("Authorization")
+func TokenValidation() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := c.Request.Header["Authorization"][0]
 		validity, _ := VerifyToken(token)
 		if validity {
-			next.ServeHTTP(w, r)
+			c.Next()
 		} else {
-			byteOfError, _ := json.Marshal(ResponseServe(http.StatusUnauthorized, "invalid Token"))
-			w.Header().Set("Content-Type", "application/json")
-			w.Write(byteOfError)
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "you are not unauthorized",
+			})
 		}
-	})
+	}
 }
