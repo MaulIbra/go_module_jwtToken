@@ -31,10 +31,10 @@ func VerifyToken(tokenString string) (bool, error) {
 	})
 
 	if err != nil {
-		return false,err
+		return false, err
 	}
 
-	if  token.Valid {
+	if token.Valid {
 		return token.Valid, err
 	} else {
 		log.Println(`error => `, err)
@@ -44,14 +44,22 @@ func VerifyToken(tokenString string) (bool, error) {
 
 func TokenValidation() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.Request.Header["Authorization"][0]
-		validity, _ := VerifyToken(token)
-		if validity {
-			c.Next()
-		} else {
+		if len(c.Request.Header["Authorization"]) == 0 {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "you are not unauthorized",
 			})
+			return
+		} else {
+			token := c.Request.Header["Authorization"][0]
+			validity, _ := VerifyToken(token)
+			if validity {
+				c.Next()
+			} else {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"error": "you are not unauthorized",
+				})
+				return
+			}
 		}
 	}
 }
